@@ -7,13 +7,6 @@ import (
 	"io/ioutil"
 )
 
-func checkError(err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal error: %s\n", err.Error())
-		os.Exit(1)
-	}
-}
-
 func main() {
 
 	if len(os.Args) != 2 {
