@@ -5,6 +5,7 @@ import (
 	"os"
 	"fmt"
 	"time"
+	"log"
 )
 
 func IsPortOpen(connectionType, addr string) bool {
@@ -24,7 +25,10 @@ func IsPortOpen(connectionType, addr string) bool {
 
 func IsPortOpenWithTimeout(isOpenCh chan bool, connectionType, addr, timeout string) {
 
-	duration, _   := time.ParseDuration(timeout)
+	duration, durationParseErr   := time.ParseDuration(timeout)
+	if durationParseErr != nil {
+		log.Fatal(durationParseErr)
+	}
 	sleepInterval := 100 * time.Millisecond
 	theTimer      := time.NewTimer(duration)
 
@@ -46,18 +50,24 @@ func IsPortOpenWithTimeout(isOpenCh chan bool, connectionType, addr, timeout str
 
 func main() {
 
-	if len(os.Args) != 2 {
-		fmt.Fprintf(os.Stderr, "Usage: %s host:port \n", os.Args[0])
+	if len(os.Args) < 2 {
+		fmt.Fprintf(os.Stderr, "Usage: %s host:port [timeout - 100ms, 5s, 1m]\n", os.Args[0])
 		os.Exit(1)
 	}
-
 	service := os.Args[1]
 
-	isOpenCh := make(chan bool)
-	go IsPortOpenWithTimeout(isOpenCh, "tcp", service, "5s")
+	duration := "5s"
+	if len(os.Args) > 2 {
+		duration = os.Args[2]
+	}
 
-	fmt.Printf("Waiting ...\n")
+	fmt.Printf("Timeout %v\n", duration)
+
+	isOpenCh := make(chan bool)
+	go IsPortOpenWithTimeout(isOpenCh, "tcp", service, duration)
+
+	fmt.Printf("Check if %s is listening ...", service)
 	isOpenResult := <-isOpenCh
-	fmt.Printf("Is Port Open? %v\n", isOpenResult)
+	fmt.Printf("Port Open? %v\n", isOpenResult)
 
 }
